@@ -1,0 +1,4 @@
+[package]
+name = "utopian_tree"
+version = "0.1.0"
+authors = ["Martin Torp <toldamtorp@gmail.com>"]

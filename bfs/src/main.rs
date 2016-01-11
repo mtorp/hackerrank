@@ -1,0 +1,157 @@
+use std::collections::{HashMap, BinaryHeap};
+use std::collections::hash_map::Entry::{Occupied, Vacant};
+use std::io;
+use std::cmp::Ordering;
+use std::str::FromStr;
+use std::cell::RefCell;
+use std::rc::Rc;
+
+fn main() {
+
+}
+
+const NODE_DIST:usize = 6;
+
+fn do_analysis() {
+    let nodes_edges:Vec<u64> = as_vec(&read_line());
+    let nodes = * nodes_edges.get(0).unwrap();
+    let edges = * nodes_edges.get(1).unwrap();
+
+    let mut graph:HashMap<u64, Rc<Node>> = HashMap::new();
+
+    for i in 1 .. edges+1 {
+        graph.insert(i, Node::new(i, Vec::new()));
+    }
+
+    for i in 0 .. edges {
+        let edge:Vec<u64> = as_vec(&read_line());
+        let start = nodes_edges.get(0).unwrap();
+        let end = nodes_edges.get(1).unwrap();
+
+        match graph.get(start) {
+            Some (start_node) => {
+                match graph.get(end) {
+                    Some (end_node) => {
+                        start_node.edges.borrow_mut().push(end_node.clone());
+                        end_node.edges.borrow_mut().push(start_node.clone());
+                    }
+                    None => panic!("Bug"),
+                }
+            }
+            None => panic!("Bug"),
+        }
+    }
+    let start:u64 = try_parse(&read_line());
+
+    djikstra(&mut graph, start);
+}
+
+struct Node {
+    dist:usize,
+    num: u64,
+    edges: RefCell<Vec<Rc<Node>>>,
+}
+
+impl Node {
+    fn new(num: u64, edges:Vec<Rc<Node>>) -> Rc<Node> {
+        Rc::new(Node { dist: std::usize::MAX, num:num, edges:RefCell::new(edges)})
+    }
+
+    fn set_dist(&mut self, dist:usize) {
+        self.dist = dist;
+    }
+}
+impl Ord for Node {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.dist.cmp(&other.dist)
+    }
+}
+
+impl PartialOrd for Node {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl PartialEq for Node {
+    fn eq(&self, other: &Self) -> bool {
+        self.num == other.num
+    }
+}
+
+impl Eq for Node {}
+
+fn djikstra(graph: & mut HashMap<u64, Rc<Node>>, start_node: u64) {
+
+    let mut priority_queue:BinaryHeap<Rc<Node>> = BinaryHeap::new();
+
+    {
+        let mut start_node:&mut Rc<Node> = graph.get_mut(&start_node).unwrap();
+        start_node.dist = NODE_DIST;
+        //start_node.set_dist(NODE_DIST);
+    }
+
+    for (_, node) in graph.iter() {
+        priority_queue.push(node.clone());
+    }
+
+    let current_node = priority_queue.pop().unwrap();
+
+    while !priority_queue.is_empty() {
+        for ref mut neighbour in current_node.edges.borrow_mut().iter_mut() {
+            relax(&(*current_node), Rc::get_mut(neighbour).unwrap());
+        }
+        let current_node = priority_queue.pop().unwrap();
+    }
+
+}
+
+fn relax (from: &Node, to: &mut Node) {
+    if from.dist + NODE_DIST < to.dist {
+       to.dist = from.dist + NODE_DIST;
+    }
+}
+
+fn read_line () -> String {
+    let mut buffer = String::new();
+    let _ = io::stdin().read_line(&mut buffer);
+
+    buffer
+}
+
+fn as_vec <T: FromStr> (numbers: &str) -> Vec<T> {
+    let mut buffer = String::new();
+    let mut vec: Vec<T> = Vec::new();
+
+    for c in numbers.trim().chars() {
+        match c {
+            ' ' => {
+                if &buffer == "-" {
+                   panic!("the - token must be used in the context of a number");
+                }
+                vec.push(try_parse(&buffer));
+                buffer.clear();
+            },
+            '0' ... '9' => buffer.push(c),
+            '-' => {
+                if buffer.is_empty() {
+                    buffer.push(c);
+                } else {
+                   panic!("Invalid placement of - sign");
+                }
+            },
+            _ => panic!("Non number in String"),
+        }
+    }
+
+    //Handle last iteration of for-loop
+    vec.push(try_parse(&buffer));
+    vec
+}
+
+fn try_parse <T: FromStr> (num: &str) -> T {
+    match num.trim().parse::<T>() {
+        Ok(n) => n,
+        Err(_) => panic!("Could not parse number"),
+    }
+}

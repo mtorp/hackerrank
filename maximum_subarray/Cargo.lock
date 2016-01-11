@@ -1,0 +1,4 @@
+[root]
+name = "maximum_subarray"
+version = "0.1.0"
+

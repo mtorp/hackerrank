@@ -1,0 +1,72 @@
+use std::io;
+use std::str::FromStr;
+
+fn main() {
+    let testcases:usize = try_parse(&read_line());
+
+    for _ in 0..testcases {
+        do_analysis();
+    }
+}
+
+
+fn do_analysis() {
+    let cycles:usize = try_parse(&read_line());
+    let mut height = 1;
+
+
+    for i in 0..cycles {
+        match i%2 {
+            0 => height *= 2,
+            1 => height += 1,
+            _ => (),
+        };
+    }
+
+    println!("{}", height);
+}
+
+
+fn read_line () -> String {
+    let mut buffer = String::new();
+    let _ = io::stdin().read_line(&mut buffer);
+
+    buffer
+}
+
+fn as_vec <T: FromStr> (numbers: &str) -> Vec<T> {
+    let mut buffer = String::new();
+    let mut vec: Vec<T> = Vec::new();
+
+    for c in numbers.trim().chars() {
+        match c {
+            ' ' => {
+                if &buffer == "-" {
+                   panic!("the - token must be used in the context of a number");
+                }
+                vec.push(try_parse(&buffer));
+                buffer.clear();
+            },
+            '0' ... '9' => buffer.push(c),
+            '-' => {
+                if buffer.is_empty() {
+                    buffer.push(c);
+                } else {
+                   panic!("Invalid placement of - sign");
+                }
+            },
+            _ => panic!("Non number in String"),
+        }
+    }
+
+    //Handle last iteration of for-loop
+    vec.push(try_parse(&buffer));
+    vec
+}
+
+fn try_parse <T: FromStr> (num: &str) -> T {
+    match num.trim().parse::<T>() {
+        Ok(n) => n,
+        Err(_) => panic!("Could not parse number"),
+    }
+}
