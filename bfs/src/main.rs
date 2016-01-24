@@ -53,8 +53,8 @@ struct Node {
 }
 
 impl Node {
-    fn new(num: u64, edges:Vec<Rc<Node>>) -> Rc<Node> {
-        Rc::new(Node { dist: std::usize::MAX, num:num, edges:RefCell::new(edges)})
+    fn new(num: u64, edges:Vec<Rc<Node>>) -> Node {
+        Node { dist: std::usize::MAX, num:num, edges:RefCell::new(edges)}
     }
 
     fn set_dist(&mut self, dist:usize) {
@@ -86,7 +86,7 @@ fn djikstra(graph: & mut HashMap<u64, Rc<Node>>, start_node: u64) {
     let mut priority_queue:BinaryHeap<Rc<Node>> = BinaryHeap::new();
 
     {
-        let mut start_node:&mut Rc<Node> = graph.get_mut(&start_node).unwrap();
+        let mut start_node = graph.get_mut(&start_node).unwrap().get_mut().unwrap();
         start_node.dist = NODE_DIST;
         //start_node.set_dist(NODE_DIST);
     }
